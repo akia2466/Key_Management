@@ -11,6 +11,7 @@ export default function ActiveClient({ records }: { records: KeyRecord[] }) {
   const [search, setSearch] = useState('')
   const [checkinRecord, setCheckinRecord] = useState<KeyRecord | null>(null)
   const [showQRScan, setShowQRScan] = useState(false)
+  const [qrTargetRecord, setQrTargetRecord] = useState<KeyRecord | null>(null)
 
   const filtered = records.filter(r =>
     r.site_id.toLowerCase().includes(search.toLowerCase()) ||
@@ -42,34 +43,17 @@ export default function ActiveClient({ records }: { records: KeyRecord[] }) {
             placeholder="Search site ID or engineer..."
             style={{ padding: '7px 12px', background: 'var(--bg)', border: '1px solid var(--border2)', borderRadius: 'var(--radius)', color: 'var(--text)', fontSize: 13, width: 240, outline: 'none' }}
           />
-
-          {/* QR Scan button — primary action */}
-          <button
-            onClick={() => setShowQRScan(true)}
-            style={{
-              padding: '7px 16px', borderRadius: 'var(--radius)',
-              background: 'var(--teal)', border: 'none',
-              color: '#0f1117', fontWeight: 600, fontSize: 13,
-              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 7,
-              transition: 'opacity 0.15s',
-            }}
-            onMouseOver={e => (e.currentTarget.style.opacity = '0.85')}
-            onMouseOut={e => (e.currentTarget.style.opacity = '1')}
-          >
-            📷 Scan to Return
-          </button>
-
-          <span style={{ fontSize: 12, color: 'var(--text3)', marginLeft: 'auto' }}>
+          <span style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--text3)' }}>
             {filtered.length} record{filtered.length !== 1 ? 's' : ''}
           </span>
         </div>
 
-        {/* QR scan hint banner */}
+        {/* Info banner */}
         <div style={{ padding: '9px 18px', background: 'rgba(45,212,170,0.05)', borderBottom: '1px solid var(--border)', fontSize: 12, color: 'var(--text2)', display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ color: 'var(--teal)' }}>📷</span>
+          <span>🔒</span>
           <span>
-            Engineers can scan their personal QR badge to auto-fill the return form — no typing needed.
-            QR codes are generated from the <strong style={{ color: 'var(--text)' }}>Engineers</strong> page.
+            <strong style={{ color: 'var(--teal)' }}>Scan QR Code</strong> — verifies the engineer via a live rotating QR badge (expires every 5 min, screenshots rejected).
+            &nbsp;<strong style={{ color: 'var(--text)' }}>Manual</strong> — direct return without QR verification.
           </span>
         </div>
 
@@ -85,7 +69,7 @@ export default function ActiveClient({ records }: { records: KeyRecord[] }) {
                 <th style={th}>Duration</th>
                 <th style={th}>Status</th>
                 <th style={th}>Notes</th>
-                <th style={th}>Manual Return</th>
+                <th style={th}>Return</th>
               </tr>
             </thead>
             <tbody>
@@ -114,16 +98,44 @@ export default function ActiveClient({ records }: { records: KeyRecord[] }) {
                     <td style={td}>
                       <Badge variant={overdue ? 'overdue' : 'out'}>{overdue ? 'Overdue' : 'Out'}</Badge>
                     </td>
-                    <td style={{ ...td, color: 'var(--text3)', fontSize: 12, maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <td style={{ ...td, color: 'var(--text3)', fontSize: 12, maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {r.notes || '—'}
                     </td>
+
+                    {/* Return column — both buttons side by side */}
                     <td style={td}>
-                      <button
-                        onClick={() => setCheckinRecord(r)}
-                        style={{ padding: '5px 12px', borderRadius: 'var(--radius)', background: 'transparent', border: '1px solid var(--border2)', color: 'var(--text2)', fontSize: 12, fontWeight: 500, cursor: 'pointer' }}
-                      >
-                        Return ↩
-                      </button>
+                      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                        {/* Scan QR Code */}
+                        <button
+                          onClick={() => { setQrTargetRecord(r); setShowQRScan(true) }}
+                          title="Verify engineer via QR badge and return key"
+                          style={{
+                            padding: '5px 10px', borderRadius: 'var(--radius)',
+                            background: 'var(--teal-bg)',
+                            border: '1px solid rgba(45,212,170,0.35)',
+                            color: 'var(--teal)', fontSize: 11, fontWeight: 600,
+                            cursor: 'pointer', whiteSpace: 'nowrap',
+                            display: 'flex', alignItems: 'center', gap: 4,
+                          }}
+                        >
+                          📷 Scan QR
+                        </button>
+
+                        {/* Manual */}
+                        <button
+                          onClick={() => setCheckinRecord(r)}
+                          title="Manually log return without QR verification"
+                          style={{
+                            padding: '5px 10px', borderRadius: 'var(--radius)',
+                            background: 'transparent',
+                            border: '1px solid var(--border2)',
+                            color: 'var(--text3)', fontSize: 11, fontWeight: 500,
+                            cursor: 'pointer', whiteSpace: 'nowrap',
+                          }}
+                        >
+                          Manual
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 )
@@ -133,7 +145,7 @@ export default function ActiveClient({ records }: { records: KeyRecord[] }) {
         </div>
       </div>
 
-      {/* Modals */}
+      {/* Manual check-in modal */}
       {checkinRecord && (
         <CheckinModal
           record={checkinRecord}
@@ -142,11 +154,12 @@ export default function ActiveClient({ records }: { records: KeyRecord[] }) {
         />
       )}
 
+      {/* QR scan modal — pre-filtered to the row's engineer if launched from row */}
       {showQRScan && (
         <QRScanModal
-          activeRecords={records}
-          onClose={() => setShowQRScan(false)}
-          onSuccess={() => { setShowQRScan(false); window.location.reload() }}
+          activeRecords={qrTargetRecord ? records.filter(r => r.engineer_name === qrTargetRecord.engineer_name) : records}
+          onClose={() => { setShowQRScan(false); setQrTargetRecord(null) }}
+          onSuccess={() => { setShowQRScan(false); setQrTargetRecord(null); window.location.reload() }}
         />
       )}
     </>

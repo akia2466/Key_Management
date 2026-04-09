@@ -1,5 +1,6 @@
 'use client'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
+import { buildQRPayload, secondsUntilNextWindow, WINDOW_MINUTES } from '@/lib/qrWindow'
 
 type Props = {
   engineerName: string
@@ -7,113 +8,139 @@ type Props = {
 }
 
 export default function EngineerQRModal({ engineerName, onClose }: Props) {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
   const [dataUrl, setDataUrl] = useState<string>('')
+  const [secsLeft, setSecsLeft] = useState(secondsUntilNextWindow())
+  const [windowNum, setWindowNum] = useState(0) // increments to force QR re-render
 
-  // QR payload — encodes engineer identity
-  const payload = JSON.stringify({
-    type: 'noc_engineer',
-    name: engineerName,
-    // stable hash so the same engineer always gets the same code
-    id: `eng_${engineerName.toLowerCase().replace(/\s+/g, '_')}`,
-  })
+  const initials = engineerName
+    .split(/[\s.()]+/).filter(Boolean).slice(0, 2)
+    .map(w => w[0].toUpperCase()).join('')
 
+  // Regenerate QR image whenever window changes
+  const generateQR = useCallback(async () => {
+    const QRCode = (await import('qrcode')).default
+    const payload = buildQRPayload(engineerName)
+    const url = await QRCode.toDataURL(payload, {
+      width: 280,
+      margin: 2,
+      color: { dark: '#e8eaf0', light: '#1e2333' },
+      errorCorrectionLevel: 'H',
+    })
+    setDataUrl(url)
+  }, [engineerName])
+
+  // Initial generation
+  useEffect(() => { generateQR() }, [generateQR, windowNum])
+
+  // Countdown timer — ticks every second, triggers regen at 0
   useEffect(() => {
-    let cancelled = false
-    ;(async () => {
-      const QRCode = (await import('qrcode')).default
-      const url = await QRCode.toDataURL(payload, {
-        width: 280,
-        margin: 2,
-        color: { dark: '#e8eaf0', light: '#1e2333' },
-        errorCorrectionLevel: 'H',
-      })
-      if (!cancelled) setDataUrl(url)
-    })()
-    return () => { cancelled = true }
-  }, [payload])
+    const interval = setInterval(() => {
+      const s = secondsUntilNextWindow()
+      setSecsLeft(s)
+      // When a new window starts, bump windowNum to trigger QR regen
+      if (s >= WINDOW_MINUTES * 60 - 1) {
+        setWindowNum(n => n + 1)
+      }
+    }, 1000)
+    return () => clearInterval(interval)
+  }, [])
 
-  const download = () => {
-    const a = document.createElement('a')
-    a.href = dataUrl
-    a.download = `NOC-QR-${engineerName.replace(/\s+/g, '-')}.png`
-    a.click()
-  }
-
-  const initials = engineerName.split(/[\s.]+/).filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join('')
+  // Colour shifts as expiry approaches
+  const urgency = secsLeft <= 30 ? 'var(--red)' : secsLeft <= 60 ? 'var(--amber)' : 'var(--teal)'
+  const pct = (secsLeft / (WINDOW_MINUTES * 60)) * 100
 
   return (
     <div
-      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200 }}
+      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200 }}
       onClick={e => e.target === e.currentTarget && onClose()}
     >
-      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border2)', borderRadius: 'var(--radius-lg)', padding: 32, width: 360, maxWidth: '95vw', textAlign: 'center' }} className="fade-in">
+      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border2)', borderRadius: 'var(--radius-lg)', padding: 32, width: 380, maxWidth: '95vw', textAlign: 'center' }} className="fade-in">
 
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24, textAlign: 'left' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20, textAlign: 'left' }}>
           <div>
-            <div style={{ fontWeight: 600, fontSize: 15, color: 'var(--text)' }}>Engineer QR Code</div>
-            <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 3 }}>Show or scan this to return a key</div>
+            <div style={{ fontWeight: 600, fontSize: 15, color: 'var(--text)' }}>Engineer QR Badge</div>
+            <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 3 }}>
+              Rotating code · refreshes every {WINDOW_MINUTES} minutes
+            </div>
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text3)', fontSize: 22, lineHeight: 1, cursor: 'pointer' }}>×</button>
         </div>
 
-        {/* QR + avatar */}
-        <div style={{ position: 'relative', display: 'inline-block', marginBottom: 20 }}>
+        {/* Security badge */}
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 12px', borderRadius: 20, background: 'rgba(45,212,170,0.1)', border: '1px solid rgba(45,212,170,0.25)', fontSize: 11, color: 'var(--teal)', marginBottom: 18 }}>
+          🔒 Time-locked · expires with countdown below
+        </div>
+
+        {/* QR Code */}
+        <div style={{ position: 'relative', display: 'inline-block', marginBottom: 16 }}>
           {dataUrl ? (
             <img
               src={dataUrl}
-              alt={`QR code for ${engineerName}`}
-              style={{ width: 220, height: 220, borderRadius: 12, border: '1px solid var(--border2)', display: 'block' }}
+              alt={`QR badge for ${engineerName}`}
+              style={{ width: 220, height: 220, borderRadius: 12, border: `2px solid ${urgency}`, display: 'block', transition: 'border-color 0.5s' }}
             />
           ) : (
             <div style={{ width: 220, height: 220, borderRadius: 12, background: 'var(--bg3)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text3)', fontSize: 13 }}>
               Generating…
             </div>
           )}
-          {/* Centred logo overlay */}
+          {/* Initials overlay */}
           <div style={{
             position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
-            width: 44, height: 44, borderRadius: '50%',
-            background: 'var(--bg2)', border: '2px solid var(--amber)',
+            width: 46, height: 46, borderRadius: '50%',
+            background: 'var(--bg2)', border: `3px solid ${urgency}`,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 13, fontWeight: 700, color: 'var(--amber)',
+            fontSize: 14, fontWeight: 700, color: urgency, transition: 'all 0.5s',
           }}>
             {initials}
           </div>
         </div>
 
-        {/* Name tag */}
-        <div style={{ marginBottom: 6, fontWeight: 600, fontSize: 16, color: 'var(--text)' }}>{engineerName}</div>
-        <div style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 24, fontFamily: 'var(--font-mono)' }}>
-          NOC Field Engineer · Key Access ID
+        {/* Engineer name */}
+        <div style={{ fontWeight: 600, fontSize: 16, color: 'var(--text)', marginBottom: 2 }}>{engineerName}</div>
+        <div style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 20, fontFamily: 'var(--font-mono)' }}>NOC Field Engineer</div>
+
+        {/* Countdown + progress bar */}
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+            <span style={{ fontSize: 12, color: 'var(--text3)' }}>Code expires in</span>
+            <span style={{ fontSize: 15, fontWeight: 700, fontFamily: 'var(--font-mono)', color: urgency, transition: 'color 0.5s' }}>
+              {String(Math.floor(secsLeft / 60)).padStart(2, '0')}:{String(secsLeft % 60).padStart(2, '0')}
+            </span>
+          </div>
+          {/* Progress bar */}
+          <div style={{ height: 5, background: 'var(--bg3)', borderRadius: 3, overflow: 'hidden' }}>
+            <div style={{
+              height: '100%', borderRadius: 3,
+              width: `${pct}%`,
+              background: urgency,
+              transition: 'width 1s linear, background 0.5s',
+            }} />
+          </div>
+          {secsLeft <= 30 && (
+            <div style={{ fontSize: 11, color: 'var(--red)', marginTop: 6, fontWeight: 500 }}>
+              ⚠ Code about to refresh — a new one will appear automatically
+            </div>
+          )}
         </div>
 
-        {/* Instructions */}
-        <div style={{
-          background: 'var(--bg3)', borderRadius: 'var(--radius)', padding: '12px 16px',
-          fontSize: 12, color: 'var(--text2)', textAlign: 'left', marginBottom: 20, lineHeight: 1.7,
-        }}>
-          <div style={{ fontWeight: 500, color: 'var(--amber)', marginBottom: 6 }}>How to use</div>
-          <div>① Download or screenshot this QR code</div>
-          <div>② When returning a key, the NOC Analyst clicks <strong style={{ color: 'var(--text)' }}>Scan to Return</strong></div>
-          <div>③ Hold your QR code up to the camera</div>
-          <div>④ The return form auto-fills with your name &amp; timestamp</div>
+        {/* Security explanation */}
+        <div style={{ background: 'var(--bg3)', borderRadius: 'var(--radius)', padding: '12px 14px', fontSize: 12, color: 'var(--text2)', textAlign: 'left', marginBottom: 20, lineHeight: 1.8 }}>
+          <div style={{ fontWeight: 500, color: 'var(--amber)', marginBottom: 4 }}>🔐 How security works</div>
+          <div>① This code changes every {WINDOW_MINUTES} minutes — screenshots expire quickly</div>
+          <div>② The NOC scanner verifies the time-window embedded in the code</div>
+          <div>③ Old or duplicate images will be rejected automatically</div>
+          <div>④ Keep this screen open and present it live when returning keys</div>
         </div>
 
-        {/* Actions */}
-        <div style={{ display: 'flex', gap: 10 }}>
-          <button onClick={onClose} style={{ flex: 1, padding: '9px 0', borderRadius: 'var(--radius)', background: 'none', border: '1px solid var(--border2)', color: 'var(--text2)', fontSize: 13, cursor: 'pointer' }}>
-            Close
-          </button>
-          <button
-            onClick={download}
-            disabled={!dataUrl}
-            style={{ flex: 2, padding: '9px 0', borderRadius: 'var(--radius)', background: 'var(--amber)', border: 'none', color: '#0f1117', fontWeight: 600, fontSize: 13, cursor: 'pointer', opacity: dataUrl ? 1 : 0.5 }}
-          >
-            ↓ Download QR Code
-          </button>
-        </div>
+        {/* Close */}
+        <button
+          onClick={onClose}
+          style={{ width: '100%', padding: '10px 0', borderRadius: 'var(--radius)', background: 'none', border: '1px solid var(--border2)', color: 'var(--text2)', fontSize: 13, cursor: 'pointer' }}
+        >
+          Close
+        </button>
       </div>
     </div>
   )
