@@ -19,7 +19,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function loadProfile(userId: string) {
     const { data } = await supabase.from('profiles').select('*').eq('id', userId).single()
-    setProfile(data as UserProfile | null)
+    const p = data as UserProfile | null
+    // Block deactivated users
+    if (p && !p.is_active) {
+      await supabase.auth.signOut()
+      setProfile(null)
+      setSession(null)
+      window.location.href = '/login?reason=deactivated'
+      return
+    }
+    setProfile(p)
   }
 
   useEffect(() => {
@@ -32,9 +41,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session)
       if (session?.user) loadProfile(session.user.id)
-      else { setProfile(null) }
+      else setProfile(null)
     })
     return () => subscription.unsubscribe()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const signOut = async () => {
