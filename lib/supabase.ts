@@ -3,14 +3,16 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+// Singleton pattern — prevents "Multiple GoTrueClient instances" warning
+const globalForSupabase = globalThis as unknown as { _supabase?: ReturnType<typeof createClient> }
 
-// Service-role client — only used server-side for admin operations (invite/delete users)
-export const supabaseAdmin = createClient(
-  supabaseUrl,
-  process.env.SUPABASE_SERVICE_ROLE_KEY ?? supabaseAnonKey, // falls back gracefully
-  { auth: { autoRefreshToken: false, persistSession: false } }
-)
+export const supabase =
+  globalForSupabase._supabase ??
+  createClient(supabaseUrl, supabaseAnonKey)
+
+if (process.env.NODE_ENV !== 'production') {
+  globalForSupabase._supabase = supabase
+}
 
 export type Role = 'admin' | 'noc' | 'engineer'
 

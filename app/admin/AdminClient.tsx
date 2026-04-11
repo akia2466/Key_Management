@@ -16,10 +16,12 @@ export default function AdminClient({
   profiles,
   statsMap,
   currentUserId,
+  onRefresh,
 }: {
   profiles: UserProfile[]
   statsMap: Record<string, Stats>
   currentUserId: string
+  onRefresh: () => Promise<void>
 }) {
   const [users, setUsers] = useState<UserProfile[]>(profiles)
   const [search, setSearch] = useState('')
@@ -253,7 +255,7 @@ export default function AdminClient({
       </div>
 
       {/* Invite Modal */}
-      {showInvite && <InviteModal onClose={() => setShowInvite(false)} onSuccess={(u) => { setUsers(prev => [...prev, u]); setShowInvite(false); showToast(`Invite sent to ${u.email}`) }} />}
+      {showInvite && <InviteModal onClose={() => setShowInvite(false)} onSuccess={(u) => { setUsers(prev => [...prev, u]); setShowInvite(false); onRefresh(); showToast(`User created: ${u.email}`) }} />}
 
       {/* Edit Name Modal */}
       {editUser && <EditNameModal user={editUser} onClose={() => setEditUser(null)} onSave={(name) => updateFullName(editUser.id, name)} saving={saving === editUser.id} />}
