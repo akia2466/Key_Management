@@ -1,12 +1,15 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient, SupabaseClient } from '@supabase/supabase-js'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
-// Singleton pattern — prevents "Multiple GoTrueClient instances" warning
-const globalForSupabase = globalThis as unknown as { _supabase?: ReturnType<typeof createClient> }
+// Singleton — prevents multiple GoTrueClient instances warning
+const globalForSupabase = globalThis as unknown as {
+  _supabase?: SupabaseClient
+}
 
-export const supabase =
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const supabase: SupabaseClient<any> =
   globalForSupabase._supabase ??
   createClient(supabaseUrl, supabaseAnonKey)
 
