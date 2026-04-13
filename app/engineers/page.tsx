@@ -1,6 +1,8 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { supabase, KeyRecord } from '@/lib/supabase'
+import { useAuth } from '@/lib/AuthContext'
+import { useRouter } from 'next/navigation'
 import { formatDuration, parseDT } from '@/lib/utils'
 import AppShell from '@/components/AppShell'
 import Topbar from '@/components/Topbar'
@@ -9,17 +11,25 @@ import EngineersClient from './EngineersClient'
 type EngRow = { name: string; total: number; active: number; activeSites: string[]; lastDate: string; avgDuration: string }
 
 export default function EngineersPage() {
+  const { profile, loading: authLoading } = useAuth()
+  const router = useRouter()
   const [engineers, setEngineers] = useState<EngRow[]>([])
   const [loading, setLoading]     = useState(true)
 
+  // Engineers cannot view the Engineers page at all
   useEffect(() => {
-    supabase
-      .from('key_records')
-      .select('*')
-      .order('date_out', { ascending: false })
+    if (authLoading) return
+    if (profile?.role === 'engineer') {
+      router.replace('/profile') // redirect to their own QR profile
+    }
+  }, [profile, authLoading, router])
+
+  useEffect(() => {
+    if (!profile || profile.role === 'engineer') return
+
+    supabase.from('key_records').select('*').order('date_out', { ascending: false })
       .then(({ data }) => {
         const records = (data ?? []) as KeyRecord[]
-
         const engMap = new Map<string, { total: number; active: number; lastDate: string; durations: number[]; activeSites: string[] }>()
 
         records.forEach(r => {
@@ -34,17 +44,17 @@ export default function EngineersPage() {
           if (!e.lastDate || r.date_out > e.lastDate) e.lastDate = r.date_out
         })
 
-        const rows = Array.from(engMap.entries()).map(([name, e]) => ({
-          name, total: e.total, active: e.active, activeSites: e.activeSites, lastDate: e.lastDate,
-          avgDuration: e.durations.length
-            ? formatDuration(e.durations.reduce((a, b) => a + b, 0) / e.durations.length)
-            : '—',
-        })).sort((a, b) => b.total - a.total)
-
-        setEngineers(rows)
+        setEngineers(
+          Array.from(engMap.entries()).map(([name, e]) => ({
+            name, total: e.total, active: e.active, activeSites: e.activeSites, lastDate: e.lastDate,
+            avgDuration: e.durations.length ? formatDuration(e.durations.reduce((a, b) => a + b, 0) / e.durations.length) : '—',
+          })).sort((a, b) => b.total - a.total)
+        )
         setLoading(false)
       })
-  }, [])
+  }, [profile])
+
+  if (profile?.role === 'engineer') return null
 
   return (
     <AppShell>

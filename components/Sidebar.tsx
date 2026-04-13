@@ -4,13 +4,14 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/AuthContext'
 import Avatar from './Avatar'
 
-const mainNav = [
-  { href: '/dashboard', label: 'Dashboard',  icon: '◈' },
-  { href: '/active',    label: 'Active Keys', icon: '⬡' },
-  { href: '/history',   label: 'Log History', icon: '≡' },
-  { href: '/sites',     label: 'Sites',       icon: '◉' },
-  { href: '/engineers', label: 'Engineers',   icon: '◎' },
-]
+// Engineers cannot see the Engineers page (it's for NOC/admin)
+const getNav = (role?: string) => [
+  { href: '/dashboard', label: 'Dashboard',  icon: '◈', roles: ['admin','noc','engineer'] },
+  { href: '/active',    label: 'Active Keys', icon: '⬡', roles: ['admin','noc','engineer'] },
+  { href: '/history',   label: 'Log History', icon: '≡', roles: ['admin','noc','engineer'] },
+  { href: '/sites',     label: 'Sites',       icon: '◉', roles: ['admin','noc','engineer'] },
+  { href: '/engineers', label: 'Engineers',   icon: '◎', roles: ['admin','noc'] },
+].filter(item => !role || item.roles.includes(role))
 
 export default function Sidebar() {
   const path = usePathname()
@@ -72,7 +73,7 @@ export default function Sidebar() {
 
       {/* Main navigation */}
       <nav style={{ padding: '10px', flex: 1, overflowY: 'auto' }}>
-        {mainNav.map(item => <NavItem key={item.href} {...item} />)}
+        {getNav(profile?.role).map(item => <NavItem key={item.href} {...item} />)}
 
         {/* Admin-only section */}
         {isAdmin && (
