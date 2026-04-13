@@ -56,7 +56,7 @@ export default function AdminPage() {
   return (
     <AppShell>
       <Topbar title="Admin Panel" sub="User management & system settings" />
-      <div style={{ padding: '24px 28px', flex: 1 }}>
+      <div style={{ padding: 'clamp(12px, 4vw, 24px) clamp(12px, 4vw, 28px)', flex: 1 }}>
         {dataLoading ? (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 200 }}>
             <div style={{ fontSize: 13, color: 'var(--text3)' }}>Loading users…</div>

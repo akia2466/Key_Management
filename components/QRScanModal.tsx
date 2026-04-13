@@ -153,7 +153,7 @@ export default function QRScanModal({ activeRecords, onClose, onSuccess }: Props
       style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200 }}
       onClick={e => { if (e.target === e.currentTarget) { stopScanner(); onClose() } }}
     >
-      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border2)', borderRadius: 'var(--radius-lg)', padding: 28, width: 500, maxWidth: '95vw' }} className="fade-in">
+      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border2)', borderRadius: 'var(--radius-lg)', padding: 'clamp(16px, 4vw, 28px)', width: '95vw', maxWidth: 500 }} className="fade-in">
 
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>

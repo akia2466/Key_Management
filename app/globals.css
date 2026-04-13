@@ -50,3 +50,21 @@ a { color: inherit; text-decoration: none; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
 .fade-in { animation: fadeIn 0.25s ease both; }
+
+/* ─── Mobile responsive ─────────────────────────────────── */
+@media (max-width: 768px) {
+  .desktop-sidebar { display: none !important; }
+  .mobile-bottom-nav { display: flex !important; }
+  .main-content { padding-bottom: 70px !important; }
+  .topbar-time { display: none !important; }
+  .stats-grid-4 { grid-template-columns: repeat(2, 1fr) !important; }
+  .two-col-grid { grid-template-columns: 1fr !important; }
+  .modal-wide { width: 95vw !important; }
+  .hide-mobile { display: none !important; }
+}
+
+@media (min-width: 769px) {
+  .mobile-bottom-nav { display: none !important; }
+  .desktop-sidebar { display: flex !important; }
+  .mobile-header { display: none !important; }
+}

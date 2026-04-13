@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { KeyRecord } from '@/lib/supabase'
 import { formatDuration, parseDT } from '@/lib/utils'
 import Avatar from '@/components/Avatar'
@@ -8,6 +9,7 @@ import CheckinModal from '@/components/CheckinModal'
 import QRScanModal from '@/components/QRScanModal'
 
 export default function ActiveClient({ records }: { records: KeyRecord[] }) {
+  const router = useRouter()
   const [search, setSearch] = useState('')
   const [checkinRecord, setCheckinRecord] = useState<KeyRecord | null>(null)
   const [showQRScan, setShowQRScan] = useState(false)
@@ -150,7 +152,7 @@ export default function ActiveClient({ records }: { records: KeyRecord[] }) {
         <CheckinModal
           record={checkinRecord}
           onClose={() => setCheckinRecord(null)}
-          onSuccess={() => { setCheckinRecord(null); window.location.reload() }}
+          onSuccess={() => { setCheckinRecord(null); router.refresh() }}
         />
       )}
 
@@ -159,7 +161,7 @@ export default function ActiveClient({ records }: { records: KeyRecord[] }) {
         <QRScanModal
           activeRecords={qrTargetRecord ? records.filter(r => r.engineer_name === qrTargetRecord.engineer_name) : records}
           onClose={() => { setShowQRScan(false); setQrTargetRecord(null) }}
-          onSuccess={() => { setShowQRScan(false); setQrTargetRecord(null); window.location.reload() }}
+          onSuccess={() => { setShowQRScan(false); setQrTargetRecord(null); router.refresh() }}
         />
       )}
     </>

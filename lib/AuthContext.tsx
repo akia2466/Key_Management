@@ -8,40 +8,31 @@ type AuthCtx = {
   profile: UserProfile | null
   loading: boolean
   signOut: () => Promise<void>
+  refreshProfile: () => Promise<void>
 }
 
-const Ctx = createContext<AuthCtx>({ session: null, profile: null, loading: true, signOut: async () => {} })
+const Ctx = createContext<AuthCtx>({
+  session: null, profile: null, loading: true,
+  signOut: async () => {}, refreshProfile: async () => {},
+})
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [session, setSession] = useState<Session | null>(null)
-  const [profile, setProfile] = useState<UserProfile | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [session, setSession]   = useState<Session | null>(null)
+  const [profile, setProfile]   = useState<UserProfile | null>(null)
+  const [loading, setLoading]   = useState(true)
 
   async function loadProfile(userId: string): Promise<void> {
     try {
       const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single()
-
-      if (error) {
-        console.error('Profile load error:', error.message)
-        setProfile(null)
-        return
-      }
-
+        .from('profiles').select('*').eq('id', userId).single()
+      if (error) { console.error('Profile load error:', error.message); setProfile(null); return }
       const p = data as UserProfile | null
-
-      // Block deactivated users immediately
       if (p && !p.is_active) {
         await supabase.auth.signOut()
-        setProfile(null)
-        setSession(null)
+        setProfile(null); setSession(null)
         window.location.href = '/login?reason=deactivated'
         return
       }
-
       setProfile(p)
     } catch (err) {
       console.error('Unexpected profile error:', err)
@@ -49,39 +40,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  async function refreshProfile(): Promise<void> {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (session?.user) await loadProfile(session.user.id)
+  }
+
   useEffect(() => {
-    // Get existing session on mount
+    // Safety net — never stay stuck on loading more than 8 seconds
+    const timeout = setTimeout(() => setLoading(false), 8000)
+
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session)
-      if (session?.user) {
-        await loadProfile(session.user.id)
-      }
+      if (session?.user) await loadProfile(session.user.id)
       setLoading(false)
+      clearTimeout(timeout)
     })
 
-    // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session)
-      if (session?.user) {
-        await loadProfile(session.user.id)
-      } else {
-        setProfile(null)
-      }
+      if (session?.user) await loadProfile(session.user.id)
+      else setProfile(null)
     })
 
-    return () => subscription.unsubscribe()
+    return () => { subscription.unsubscribe(); clearTimeout(timeout) }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const signOut = async () => {
     await supabase.auth.signOut()
-    setProfile(null)
-    setSession(null)
+    setProfile(null); setSession(null)
     window.location.href = '/login'
   }
 
   return (
-    <Ctx.Provider value={{ session, profile, loading, signOut }}>
+    <Ctx.Provider value={{ session, profile, loading, signOut, refreshProfile }}>
       {children}
     </Ctx.Provider>
   )

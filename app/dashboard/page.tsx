@@ -43,14 +43,14 @@ export default function DashboardPage() {
         title="Dashboard"
         sub={isEngineer ? `Welcome back, ${profile?.full_name}` : 'Network Operations Centre — Key Management'}
       />
-      <div style={{ padding: '24px 28px', flex: 1 }}>
+      <div style={{ padding: 'clamp(12px, 4vw, 24px) clamp(12px, 4vw, 28px)', flex: 1 }}>
         {loading ? (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 200 }}>
             <div style={{ fontSize: 13, color: 'var(--text3)' }}>Loading…</div>
           </div>
         ) : (
           <>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 14, marginBottom: 24 }}>
+            <div className="stats-grid-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 14, marginBottom: 24 }}>
               <StatCard label={isEngineer ? 'My Keys Out' : 'Keys Out'} value={active.length} sub={isEngineer ? 'Your keys in field' : 'Currently in the field'} accent="var(--red)" />
               <StatCard label="Returned Today" value={returned.length} sub="Back at NOC today" accent="var(--teal)" />
               <StatCard label="Overdue" value={overdue.length} sub="Out more than 8 hours" accent={overdue.length > 0 ? 'var(--amber)' : undefined} />

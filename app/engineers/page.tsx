@@ -59,7 +59,7 @@ export default function EngineersPage() {
   return (
     <AppShell>
       <Topbar title="Engineers" sub={`${engineers.length} field engineers`} />
-      <div style={{ padding: '24px 28px', flex: 1 }}>
+      <div style={{ padding: 'clamp(12px, 4vw, 24px) clamp(12px, 4vw, 28px)', flex: 1 }}>
         {loading ? (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 200 }}>
             <div style={{ fontSize: 13, color: 'var(--text3)' }}>Loading…</div>

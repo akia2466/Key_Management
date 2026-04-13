@@ -182,7 +182,7 @@ export default function CheckoutModal({ onClose, onSuccess }: { onClose: () => v
       style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.72)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}
       onClick={e => { if (e.target === e.currentTarget && step === 'form') onClose() }}
     >
-      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border2)', borderRadius: 'var(--radius-lg)', padding: 28, width: 460, maxWidth: '95vw' }} className="fade-in">
+      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border2)', borderRadius: 'var(--radius-lg)', padding: 'clamp(16px, 4vw, 28px)', width: '95vw', maxWidth: 460 }} className="fade-in">
 
         {/* Step bar */}
         {step !== 'success' && (

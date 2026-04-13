@@ -48,7 +48,7 @@ export default function ProfilePage() {
 
   return (
     <AppShell>
-      <div style={{ padding: '32px 28px', flex: 1, display: 'flex', alignItems: 'flex-start', gap: 32, flexWrap: 'wrap' }}>
+      <div style={{ padding: 'clamp(16px, 4vw, 32px) clamp(12px, 4vw, 28px)', flex: 1, display: 'flex', alignItems: 'flex-start', gap: 24, flexWrap: 'wrap' }}>
 
         {/* Left: QR panel */}
         <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: 32, textAlign: 'center', minWidth: 300, flex: '0 0 auto' }}>
