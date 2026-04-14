@@ -10,7 +10,7 @@ export default function MobileHeader() {
   const [showModal, setShowModal] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
 
-  const roleColor = profile?.role === 'admin' ? 'var(--red)' : profile?.role === 'noc' ? 'var(--amber)' : 'var(--teal)'
+  const roleColor = profile?.role === 'admin' ? 'var(--red)' : (profile?.role === 'noc' || profile?.role === 'supervisor') ? 'var(--amber)' : 'var(--teal)'
 
   const handleSuccess = async () => {
     setShowModal(false)

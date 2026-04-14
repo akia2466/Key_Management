@@ -21,8 +21,9 @@ export default function CheckoutModal({ onClose, onSuccess }: { onClose: () => v
   const [formError, setFormError] = useState('')
 
   // Captured from QR
-  const [engineerName, setEngineerName]   = useState('')
-  const [engineerId, setEngineerId]       = useState<string | null>(null)
+  const [engineerName, setEngineerName]     = useState('')
+  const [engineerId, setEngineerId]         = useState<string | null>(null)
+  const [engineerCompany, setEngineerCompany] = useState<string | null>(null)
   const [capturedDate, setCapturedDate]   = useState('')
   const [capturedTime, setCapturedTime]   = useState('')
 
@@ -96,8 +97,9 @@ export default function CheckoutModal({ onClose, onSuccess }: { onClose: () => v
 
             // Look up profile ID
             const { data } = await supabase
-              .from('profiles').select('id').eq('full_name', result.name!).single()
+              .from('profiles').select('id, company').eq('full_name', result.name!).single()
             setEngineerId(data?.id ?? null)
+            setEngineerCompany(data?.company ?? null)
 
             setStep('confirmed')
           },
@@ -132,6 +134,7 @@ export default function CheckoutModal({ onClose, onSuccess }: { onClose: () => v
       site_id:               siteId.toUpperCase().trim(),
       engineer_name:         engineerName,
       engineer_id:           engineerId,
+      engineer_company:      engineerCompany,
       checkout_confirmed_by: engineerId,
       date_out:              capturedDate,
       time_out:              capturedTime,

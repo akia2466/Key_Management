@@ -1,0 +1,14 @@
+{
+  "name": "NOC Key Tracker",
+  "short_name": "NOC Keys",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ],
+  "theme_color": "#0f1117",
+  "background_color": "#0f1117",
+  "display": "standalone"
+}

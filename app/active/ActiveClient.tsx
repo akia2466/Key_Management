@@ -17,7 +17,8 @@ export default function ActiveClient({ records }: { records: KeyRecord[] }) {
 
   const filtered = records.filter(r =>
     r.site_id.toLowerCase().includes(search.toLowerCase()) ||
-    r.engineer_name.toLowerCase().includes(search.toLowerCase())
+    r.engineer_name.toLowerCase().includes(search.toLowerCase()) ||
+    (r.engineer_company ?? '').toLowerCase().includes(search.toLowerCase())
   )
 
   const now = Date.now()
@@ -66,6 +67,7 @@ export default function ActiveClient({ records }: { records: KeyRecord[] }) {
               <tr>
                 <th style={th}>Site ID</th>
                 <th style={th}>Engineer</th>
+                <th style={th}>Company</th>
                 <th style={th}>Date Out</th>
                 <th style={th}>Time Out</th>
                 <th style={th}>Duration</th>
@@ -92,6 +94,7 @@ export default function ActiveClient({ records }: { records: KeyRecord[] }) {
                         {r.engineer_name}
                       </div>
                     </td>
+                    <td style={{ ...td, fontSize: 12, color: 'var(--text2)' }}>{r.engineer_company || '—'}</td>
                     <td style={{ ...td, color: 'var(--text2)' }}>{r.date_out}</td>
                     <td style={{ ...td, fontFamily: 'var(--font-mono)', fontSize: 12 }}>{r.time_out}</td>
                     <td style={{ ...td, color: overdue ? 'var(--amber)' : 'var(--text2)', fontWeight: overdue ? 500 : 400 }}>

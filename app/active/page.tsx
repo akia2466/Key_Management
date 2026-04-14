@@ -13,7 +13,7 @@ export default function ActivePage() {
 
   useEffect(() => {
     if (!profile) return
-    const isEngineer = profile.role === 'engineer'
+    const isEngineer = profile.role === 'engineer' // non-privileged: only sees own data
 
     let query = supabase
       .from('key_records')
@@ -23,7 +23,8 @@ export default function ActivePage() {
       .order('time_out', { ascending: false })
 
     // Engineers only see their own active keys
-    if (isEngineer) query = query.eq('engineer_name', profile.full_name)
+    // Engineers only see their own; admin/supervisor/noc see all
+    if (profile.role === 'engineer') query = query.eq('engineer_name', profile.full_name)
 
     query.then(({ data }) => {
       setRecords((data ?? []) as KeyRecord[])

@@ -10,7 +10,7 @@ const getNav = (role?: string) => [
   { href: '/active',    label: 'Active Keys', icon: '⬡', roles: ['admin','noc','engineer'] },
   { href: '/history',   label: 'Log History', icon: '≡', roles: ['admin','noc','engineer'] },
   { href: '/sites',     label: 'Sites',       icon: '◉', roles: ['admin','noc','engineer'] },
-  { href: '/engineers', label: 'Engineers',   icon: '◎', roles: ['admin','noc'] },
+  { href: '/engineers', label: 'Engineers',   icon: '◎', roles: ['admin','noc','supervisor'] },
 ].filter(item => !role || item.roles.includes(role))
 
 export default function Sidebar() {
@@ -22,8 +22,9 @@ export default function Sidebar() {
   const isNoc      = profile?.role === 'noc'
   const isEngineer = profile?.role === 'engineer'
 
-  const roleColor = isAdmin ? 'var(--red)' : isNoc ? 'var(--amber)' : 'var(--teal)'
-  const roleLabel = isAdmin ? '👑 Admin' : isNoc ? '🖥️ NOC Analyst' : '🔧 Field Engineer'
+  const isSupervisor = profile?.role === 'supervisor'
+  const roleColor = isAdmin ? 'var(--red)' : (isNoc || isSupervisor) ? 'var(--amber)' : 'var(--teal)'
+  const roleLabel = isAdmin ? '👑 Admin' : isNoc ? '🖥️ NOC Analyst' : isSupervisor ? '📋 Supervisor' : '🔧 Field Engineer'
 
   const NavItem = ({ href, label, icon }: { href: string; label: string; icon: string }) => {
     const active = path === href || (href !== '/dashboard' && path.startsWith(href))

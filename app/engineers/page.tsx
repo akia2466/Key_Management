@@ -8,7 +8,7 @@ import AppShell from '@/components/AppShell'
 import Topbar from '@/components/Topbar'
 import EngineersClient from './EngineersClient'
 
-type EngRow = { name: string; total: number; active: number; activeSites: string[]; lastDate: string; avgDuration: string }
+type EngRow = { name: string; company: string; total: number; active: number; activeSites: string[]; lastDate: string; avgDuration: string }
 
 export default function EngineersPage() {
   const { profile, loading: authLoading } = useAuth()
@@ -20,7 +20,7 @@ export default function EngineersPage() {
   useEffect(() => {
     if (authLoading) return
     if (profile?.role === 'engineer') {
-      router.replace('/profile') // redirect to their own QR profile
+      router.replace('/profile')
     }
   }, [profile, authLoading, router])
 
@@ -30,10 +30,10 @@ export default function EngineersPage() {
     supabase.from('key_records').select('*').order('date_out', { ascending: false })
       .then(({ data }) => {
         const records = (data ?? []) as KeyRecord[]
-        const engMap = new Map<string, { total: number; active: number; lastDate: string; durations: number[]; activeSites: string[] }>()
+        const engMap = new Map<string, { company: string; total: number; active: number; lastDate: string; durations: number[]; activeSites: string[] }>()
 
         records.forEach(r => {
-          if (!engMap.has(r.engineer_name)) engMap.set(r.engineer_name, { total: 0, active: 0, lastDate: '', durations: [], activeSites: [] })
+          if (!engMap.has(r.engineer_name)) engMap.set(r.engineer_name, { company: r.engineer_company || '—', total: 0, active: 0, lastDate: '', durations: [], activeSites: [] })
           const e = engMap.get(r.engineer_name)!
           e.total++
           if (!r.date_in) { e.active++; e.activeSites.push(r.site_id) }
@@ -46,7 +46,7 @@ export default function EngineersPage() {
 
         setEngineers(
           Array.from(engMap.entries()).map(([name, e]) => ({
-            name, total: e.total, active: e.active, activeSites: e.activeSites, lastDate: e.lastDate,
+            name, company: e.company, total: e.total, active: e.active, activeSites: e.activeSites, lastDate: e.lastDate,
             avgDuration: e.durations.length ? formatDuration(e.durations.reduce((a, b) => a + b, 0) / e.durations.length) : '—',
           })).sort((a, b) => b.total - a.total)
         )

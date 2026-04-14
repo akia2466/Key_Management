@@ -14,7 +14,8 @@ export default function HistoryClient({ records }: { records: KeyRecord[] }) {
   const filtered = useMemo(() => records.filter(r => {
     const matchSearch = !search ||
       r.site_id.toLowerCase().includes(search.toLowerCase()) ||
-      r.engineer_name.toLowerCase().includes(search.toLowerCase())
+      r.engineer_name.toLowerCase().includes(search.toLowerCase()) ||
+      (r.engineer_company ?? '').toLowerCase().includes(search.toLowerCase())
     const matchStatus = statusFilter === 'all' || (statusFilter === 'out' ? !r.date_in : !!r.date_in)
     const matchFrom = !dateFrom || r.date_out >= dateFrom
     const matchTo = !dateTo || r.date_out <= dateTo
@@ -66,6 +67,7 @@ export default function HistoryClient({ records }: { records: KeyRecord[] }) {
             <tr>
               <th style={th}>Site ID</th>
               <th style={th}>Engineer</th>
+              <th style={th}>Company</th>
               <th style={th}>Date Out</th>
               <th style={th}>Time Out</th>
               <th style={th}>Date In</th>
@@ -94,6 +96,7 @@ export default function HistoryClient({ records }: { records: KeyRecord[] }) {
                       {r.engineer_name}
                     </div>
                   </td>
+                  <td style={{ ...td, fontSize: 12, color: 'var(--text2)' }}>{r.engineer_company || '—'}</td>
                   <td style={{ ...td, color: 'var(--text2)' }}>{r.date_out}</td>
                   <td style={{ ...td, fontFamily: 'var(--font-mono)', fontSize: 12 }}>{r.time_out}</td>
                   <td style={{ ...td, color: 'var(--text2)' }}>{r.date_in || '—'}</td>

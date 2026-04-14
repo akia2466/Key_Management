@@ -4,7 +4,7 @@ import Avatar from '@/components/Avatar'
 import Badge from '@/components/Badge'
 import EngineerQRModal from '@/components/EngineerQRModal'
 
-type EngRow = { name: string; total: number; active: number; activeSites: string[]; lastDate: string; avgDuration: string }
+type EngRow = { name: string; company: string; total: number; active: number; activeSites: string[]; lastDate: string; avgDuration: string }
 
 export default function EngineersClient({ engineers }: { engineers: EngRow[] }) {
   const [search, setSearch] = useState('')
@@ -49,6 +49,7 @@ export default function EngineersClient({ engineers }: { engineers: EngRow[] }) 
             <thead>
               <tr>
                 <th style={th}>Engineer</th>
+                <th style={th}>Company</th>
                 <th style={th}>Total Checkouts</th>
                 <th style={th}>Currently Holding</th>
                 <th style={th}>Active Sites</th>
@@ -69,6 +70,7 @@ export default function EngineersClient({ engineers }: { engineers: EngRow[] }) 
                       <span style={{ fontWeight: 500 }}>{e.name}</span>
                     </div>
                   </td>
+                  <td style={{ ...td, fontSize: 12, color: 'var(--text2)' }}>{e.company || '—'}</td>
                   <td style={{ ...td, fontWeight: 600, color: 'var(--text)' }}>{e.total}</td>
                   <td style={td}>{e.active > 0 ? <Badge variant="out">{e.active} key{e.active > 1 ? 's' : ''}</Badge> : <Badge variant="in">None</Badge>}</td>
                   <td style={td}>

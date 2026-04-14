@@ -17,9 +17,9 @@ const Ctx = createContext<AuthCtx>({
 })
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [session, setSession]   = useState<Session | null>(null)
-  const [profile, setProfile]   = useState<UserProfile | null>(null)
-  const [loading, setLoading]   = useState(true)
+  const [session, setSession] = useState<Session | null>(null)
+  const [profile, setProfile] = useState<UserProfile | null>(null)
+  const [loading, setLoading] = useState(true)
 
   async function loadProfile(userId: string): Promise<void> {
     try {
@@ -46,22 +46,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
-    // Safety net — never stay stuck on loading more than 8 seconds
     const timeout = setTimeout(() => setLoading(false), 8000)
-
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session)
       if (session?.user) await loadProfile(session.user.id)
       setLoading(false)
       clearTimeout(timeout)
     })
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session)
       if (session?.user) await loadProfile(session.user.id)
       else setProfile(null)
     })
-
     return () => { subscription.unsubscribe(); clearTimeout(timeout) }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])

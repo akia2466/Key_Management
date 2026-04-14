@@ -5,6 +5,12 @@ import { AuthProvider } from '@/lib/AuthContext'
 export const metadata: Metadata = {
   title: 'NOC Key Tracker',
   description: 'Network Operations Centre — Key Management System',
+  icons: {
+    icon: '/favicon.svg',
+    shortcut: '/favicon.svg',
+    apple: '/favicon.svg',
+  },
+  manifest: '/site.webmanifest',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

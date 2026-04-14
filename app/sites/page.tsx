@@ -15,10 +15,11 @@ export default function SitesPage() {
 
   useEffect(() => {
     if (!profile) return
-    const isEngineer = profile.role === 'engineer'
+    const isEngineer = profile.role === 'engineer' // non-privileged: only sees own data
 
     let query = supabase.from('key_records').select('*').order('date_out', { ascending: false })
-    if (isEngineer) query = query.eq('engineer_name', profile.full_name)
+    // Engineers only see their own; admin/supervisor/noc see all
+    if (profile.role === 'engineer') query = query.eq('engineer_name', profile.full_name)
 
     query.then(({ data }) => {
       const records = (data ?? []) as KeyRecord[]

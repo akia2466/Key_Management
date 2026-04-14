@@ -6,8 +6,9 @@ import { useAuth } from '@/lib/AuthContext'
 export default function MobileNav() {
   const path = usePathname()
   const { profile } = useAuth()
-  const isEngineer = profile?.role === 'engineer'
-  const isAdmin    = profile?.role === 'admin'
+  const isEngineer   = profile?.role === 'engineer'
+  const isAdmin      = profile?.role === 'admin'
+  const isSupervisor = profile?.role === 'supervisor'
 
   const tabs = [
     { href: '/dashboard', label: 'Home',    icon: '◈' },
