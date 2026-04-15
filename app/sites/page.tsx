@@ -50,7 +50,7 @@ export default function SitesPage() {
         title="Sites"
         sub={isEngineer ? `${sites.length} sites you have visited` : `${sites.length} registered basestations`}
       />
-      <div style={{ padding: 'clamp(12px, 4vw, 24px) clamp(12px, 4vw, 28px)', flex: 1 }}>
+      <div style={{ padding: 'clamp(12px, 4vw, 24px) clamp(12px, 4vw, 28px)', flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
         {loading ? (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 200 }}>
             <div style={{ fontSize: 13, color: 'var(--text3)' }}>Loading…</div>

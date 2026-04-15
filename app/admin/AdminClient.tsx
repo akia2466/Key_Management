@@ -81,6 +81,19 @@ export default function AdminClient({
     showToast(newVal ? 'User activated' : 'User deactivated')
   }
 
+  async function deleteUser(user: UserProfile) {
+    if (user.id === currentUserId) { showToast('Cannot delete your own account', false); return }
+    if (!window.confirm(`Permanently delete "${user.full_name}" (${user.email})? This cannot be undone.`)) return
+    setSaving(user.id)
+    // Delete profile row — auth.users row will cascade via FK if set up, otherwise stays
+    const { error } = await supabase.from('profiles').delete().eq('id', user.id)
+    setSaving(null)
+    if (error) { showToast('Delete failed: ' + error.message, false); return }
+    setUsers(u => u.filter(p => p.id !== user.id))
+    await onRefresh()
+    showToast(`${user.full_name} deleted`)
+  }
+
   async function updateFullName(userId: string, full_name: string) {
     setSaving(userId)
     const { error } = await supabase.from('profiles').update({ full_name }).eq('id', userId)
@@ -236,10 +249,17 @@ export default function AdminClient({
                       <div style={{ display: 'flex', gap: 6 }}>
                         <button onClick={() => setEditUser(u)} style={{ padding: '4px 10px', borderRadius: 'var(--radius)', background: 'none', border: '1px solid var(--border2)', color: 'var(--text2)', fontSize: 11, cursor: 'pointer' }}>✏ Edit</button>
                         {!isSelf && (
-                          <button onClick={() => toggleActive(u)} disabled={isLoading}
-                            style={{ padding: '4px 10px', borderRadius: 'var(--radius)', background: 'none', border: `1px solid ${u.is_active ? 'rgba(242,100,100,0.4)' : 'rgba(45,212,170,0.4)'}`, color: u.is_active ? 'var(--red)' : 'var(--teal)', fontSize: 11, cursor: 'pointer', opacity: isLoading ? 0.5 : 1 }}>
-                            {isLoading ? '…' : u.is_active ? 'Deactivate' : 'Activate'}
-                          </button>
+                          <>
+                            <button onClick={() => toggleActive(u)} disabled={isLoading}
+                              style={{ padding: '4px 10px', borderRadius: 'var(--radius)', background: 'none', border: `1px solid ${u.is_active ? 'rgba(242,100,100,0.4)' : 'rgba(45,212,170,0.4)'}`, color: u.is_active ? 'var(--red)' : 'var(--teal)', fontSize: 11, cursor: 'pointer', opacity: isLoading ? 0.5 : 1 }}>
+                              {isLoading ? '…' : u.is_active ? 'Deactivate' : 'Activate'}
+                            </button>
+                            <button onClick={() => deleteUser(u)} disabled={isLoading}
+                              style={{ padding: '4px 10px', borderRadius: 'var(--radius)', background: 'none', border: '1px solid rgba(242,100,100,0.6)', color: 'var(--red)', fontSize: 11, cursor: 'pointer', opacity: isLoading ? 0.5 : 1 }}
+                              title="Permanently delete this user">
+                              🗑 Delete
+                            </button>
+                          </>
                         )}
                       </div>
                     </td>

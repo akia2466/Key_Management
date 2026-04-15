@@ -6,10 +6,10 @@ import Avatar from '@/components/Avatar'
 import Badge from '@/components/Badge'
 
 export default function HistoryClient({ records }: { records: KeyRecord[] }) {
-  const [search, setSearch] = useState('')
+  const [search, setSearch]           = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'out' | 'returned'>('all')
-  const [dateFrom, setDateFrom] = useState('')
-  const [dateTo, setDateTo] = useState('')
+  const [dateFrom, setDateFrom]       = useState('')
+  const [dateTo, setDateTo]           = useState('')
 
   const filtered = useMemo(() => records.filter(r => {
     const matchSearch = !search ||
@@ -17,18 +17,19 @@ export default function HistoryClient({ records }: { records: KeyRecord[] }) {
       r.engineer_name.toLowerCase().includes(search.toLowerCase()) ||
       (r.engineer_company ?? '').toLowerCase().includes(search.toLowerCase())
     const matchStatus = statusFilter === 'all' || (statusFilter === 'out' ? !r.date_in : !!r.date_in)
-    const matchFrom = !dateFrom || r.date_out >= dateFrom
-    const matchTo = !dateTo || r.date_out <= dateTo
+    const matchFrom   = !dateFrom || r.date_out >= dateFrom
+    const matchTo     = !dateTo   || r.date_out <= dateTo
     return matchSearch && matchStatus && matchFrom && matchTo
   }), [records, search, statusFilter, dateFrom, dateTo])
 
   const th: React.CSSProperties = {
-    padding: '10px 16px', textAlign: 'left', fontSize: 11, fontWeight: 500,
+    padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 500,
     color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '0.4px',
     borderBottom: '1px solid var(--border)', background: 'var(--bg3)', whiteSpace: 'nowrap',
+    position: 'sticky', top: 0, zIndex: 1,
   }
   const td: React.CSSProperties = {
-    padding: '10px 16px', borderBottom: '1px solid var(--border)', fontSize: 13, verticalAlign: 'middle',
+    padding: '10px 14px', borderBottom: '1px solid var(--border)', fontSize: 13, verticalAlign: 'middle',
   }
   const inp: React.CSSProperties = {
     padding: '7px 10px', background: 'var(--bg)', border: '1px solid var(--border2)',
@@ -36,11 +37,12 @@ export default function HistoryClient({ records }: { records: KeyRecord[] }) {
   }
 
   return (
-    <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
-      {/* Filters */}
-      <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)', display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search site or engineer..." style={{ ...inp, width: 220 }} />
-        <select value={statusFilter} onChange={e => setStatusFilter(e.target.value as 'all' | 'out' | 'returned')} style={{ ...inp }}>
+    <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', overflow: 'hidden', display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+
+      {/* Filters — fixed, never scrolls */}
+      <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--border)', display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', flexShrink: 0 }}>
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search site, engineer or company…" style={{ ...inp, width: 240 }} />
+        <select value={statusFilter} onChange={e => setStatusFilter(e.target.value as 'all' | 'out' | 'returned')} style={inp}>
           <option value="all">All status</option>
           <option value="out">Out</option>
           <option value="returned">Returned</option>
@@ -54,14 +56,14 @@ export default function HistoryClient({ records }: { records: KeyRecord[] }) {
         {(search || statusFilter !== 'all' || dateFrom || dateTo) && (
           <button onClick={() => { setSearch(''); setStatusFilter('all'); setDateFrom(''); setDateTo('') }}
             style={{ ...inp, cursor: 'pointer', color: 'var(--amber)', borderColor: 'rgba(245,166,35,0.3)' }}>
-            Clear filters
+            Clear
           </button>
         )}
         <span style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--text3)' }}>{filtered.length} record{filtered.length !== 1 ? 's' : ''}</span>
       </div>
 
-      {/* Table */}
-      <div style={{ overflowX: 'auto' }}>
+      {/* Scrollable table */}
+      <div style={{ overflowX: 'auto', overflowY: 'auto', flex: 1 }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr>
@@ -79,7 +81,7 @@ export default function HistoryClient({ records }: { records: KeyRecord[] }) {
           </thead>
           <tbody>
             {filtered.length === 0 && (
-              <tr><td colSpan={9} style={{ ...td, textAlign: 'center', color: 'var(--text3)', padding: 40 }}>No records match your filters</td></tr>
+              <tr><td colSpan={10} style={{ ...td, textAlign: 'center', color: 'var(--text3)', padding: 40 }}>No records match your filters</td></tr>
             )}
             {filtered.map(r => {
               let dur = '—'
@@ -103,7 +105,7 @@ export default function HistoryClient({ records }: { records: KeyRecord[] }) {
                   <td style={{ ...td, fontFamily: 'var(--font-mono)', fontSize: 12 }}>{r.time_in || '—'}</td>
                   <td style={{ ...td, color: 'var(--text2)' }}>{dur}</td>
                   <td style={td}><Badge variant={r.date_in ? 'in' : 'out'}>{r.date_in ? 'Returned' : 'Out'}</Badge></td>
-                  <td style={{ ...td, color: 'var(--text3)', fontSize: 12 }}>{r.notes || '—'}</td>
+                  <td style={{ ...td, color: 'var(--text3)', fontSize: 12, maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.notes || '—'}</td>
                 </tr>
               )
             })}
